@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>net.atos</groupId>
+  <artifactId>cxf-policy-test</artifactId>
+  <packaging>war</packaging>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>Camel route for CXF testing</name>
+
+  <properties>
+    <version.maven.compiler>3.7.0</version.maven.compiler>
+    <version.maven.war>3.1.0</version.maven.war>
+    <version.maven.surefire>2.20</version.maven.surefire>
+    <version.jboss.fuse.bom>6.3.0.redhat-187</version.jboss.fuse.bom>
+    <!-- <version.camel>2.17.0.redhat-630187</version.camel> -->
+    <version.camel>2.17.0</version.camel>
+    <version.cxf>3.1.5</version.cxf>
+    <version.docker.maven.plugin>0.21.0</version.docker.maven.plugin>
+  </properties>
+
+  <dependencyManagement>
+     <dependencies>
+     <!-- 
+        <dependency>
+           <groupId>org.jboss.fuse.bom</groupId>
+           <artifactId>jboss-fuse-parent</artifactId>
+           <version>${version.jboss.fuse.bom}</version>
+           <type>pom</type>
+           <scope>import</scope>
+        </dependency>
+       -->
+     </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <!-- PROVIDED -->
+    <!-- 
+    <dependency>
+      <groupId>javax</groupId>
+      <artifactId>javaee-api</artifactId>
+      <version>6.0</version>
+      <scope>provided</scope>
+    </dependency>
+    -->
+    <dependency>
+      <groupId>javax.enterprise</groupId>
+      <artifactId>cdi-api</artifactId>
+      <version>1.0</version>
+      <scope>provided</scope>
+    </dependency>    
+    
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-cdi</artifactId>
+      <version>${version.camel}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- EXTRAS -->
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-jetty</artifactId>
+      <version>${version.camel}</version>
+      <!-- <scope>provided</scope> -->
+    </dependency>
+    
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-http4</artifactId>
+      <version>${version.camel}</version>
+      <!-- <scope>provided</scope> -->
+    </dependency>
+      
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-cxf</artifactId>
+      <version>${version.camel}</version>
+      <!-- <scope>provided</scope> -->
+    </dependency>
+        
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-ws-policy</artifactId>
+      <version>${version.cxf}</version>
+      <!-- <scope>provided</scope> -->
+    </dependency>
+    
+    <dependency>
+      <groupId>org.apache.cxf</groupId>
+      <artifactId>cxf-rt-ws-security</artifactId>
+      <version>${version.cxf}</version>
+      <!-- <scope>provided</scope> -->
+    </dependency>
+
+    <!-- TEST -->
+  </dependencies>
+
+  <build>
+    <finalName>${project.artifactId}</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${version.maven.compiler}</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>${version.maven.war}</version>
+        <configuration>
+          <failOnMissingWebXml>false</failOnMissingWebXml>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${version.maven.surefire}</version>
+      </plugin>
+<!--  -->
+
+<!--  -->
+      <plugin>
+        <groupId>io.fabric8</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+        <version>${version.docker.maven.plugin}</version>
+        <configuration>
+          <images>
+            <image>
+              <name>${project.artifactId}:${project.version}</name>
+              <build>
+                <assembly>
+                  <descriptorRef>artifact</descriptorRef>
+                  <targetDir>/opt/eap/standalone/deployments</targetDir>
+                </assembly>
+                <!-- requires fuse on eap Docker image -->
+                <from>fuse_eap:6.3.0</from>
+                <tags>
+                  <tag>latest</tag>
+                </tags>
+                <labels>
+                  <datetimestamp>${maven.build.timestamp}</datetimestamp>
+                  <version>${project.version}</version>
+                </labels>
+              </build>
+            </image>
+          </images>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.camel</groupId>
+        <artifactId>camel-maven-plugin</artifactId>
+        <version>${version.camel}</version>
+        <dependencies>
+		   <dependency>
+			 <groupId>org.apache.deltaspike.cdictrl</groupId>
+			 <artifactId>deltaspike-cdictrl-weld</artifactId>
+			 <version>1.5.4</version>
+		   </dependency>
+           <dependency>
+             <groupId>org.jboss.weld.se</groupId>
+             <artifactId>weld-se</artifactId>
+             <version>1.1.28.Final</version>
+           </dependency>
+        </dependencies>
+      </plugin>
+    </plugins>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>redhat-ga-repository</id>
+      <url>https://maven.repository.redhat.com/ga</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>maven central</id>
+      <url>http://uk.maven.org/maven2</url>
+    </repository>
+  </repositories>
+
+</project>
